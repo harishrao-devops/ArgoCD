@@ -20,27 +20,18 @@ The application is packaged using Helm and deployed to Kubernetes through Argo C
 
 ## Architecture
 
-```text
-                    Developer
-                        |
-                        v
-                  GitHub Repository
-                        |
-              +---------+---------+
-              |                   |
-              v                   v
-       GitHub Actions          Argo CD
-              |                   |
-        CI / Build / Scan    GitOps / CD
-              |                   |
-              v                   v
-        Container Registry   Helm Application
-                                  |
-                                  v
-                           Kubernetes Cluster
-                                  |
-                                  v
-                             Application
+```mermaid
+flowchart TD
+    A[Developer] --> B[GitHub Repository]
+    B --> C[GitHub Actions]
+    B --> D[Argo CD]
+    C --> E[Container Registry]
+    D --> F[Helm Application]
+    F --> G[Kubernetes Cluster]
+    G --> H[Application]
+
+    C --> C1[CI / Build / Scan]
+    D --> D1[GitOps / CD]
 ```
 
 ### GitOps Flow
@@ -399,62 +390,6 @@ helm/
         └── ingress.yaml
 ```
 
-## Chart.yaml
-
-Contains Helm chart metadata.
-
-```yaml
-apiVersion: v2
-name: argocd-demo
-description: Sample application deployed using Argo CD and Helm
-type: application
-version: 0.1.0
-appVersion: "1.0.0"
-```
-
-## values.yaml
-
-Contains configurable application values.
-
-Example:
-
-```yaml
-replicaCount: 2
-
-image:
-  repository: nginx
-  tag: "1.27"
-  pullPolicy: IfNotPresent
-
-service:
-  type: ClusterIP
-  port: 80
-
-ingress:
-  enabled: false
-```
-
-## templates/
-
-Contains Kubernetes resource templates.
-
-```text
-templates/
-├── deployment.yaml
-├── service.yaml
-└── ingress.yaml
-```
-
-Helm replaces values such as:
-
-```text
-{{ .Values.replicaCount }}
-{{ .Values.image.repository }}
-{{ .Values.image.tag }}
-```
-
-with values from `values.yaml`.
-
 ---
 
 # Installing Argo CD Using Helm
@@ -631,24 +566,6 @@ syncPolicy:
   automated:
     prune: true
     selfHeal: true
-```
-
-Workflow:
-
-```text
-Git Change
-    |
-    v
-Argo CD detects change
-    |
-    v
-Application becomes OutOfSync
-    |
-    v
-Automatic Sync
-    |
-    v
-Kubernetes updated
 ```
 
 ---
@@ -911,24 +828,6 @@ View logs:
 kubectl logs <POD_NAME> -n argocd
 ```
 
-## Check Application
-
-```bash
-argocd app get argocd-demo
-```
-
-## Check Application Resources
-
-```bash
-argocd app resources argocd-demo
-```
-
-## Check Helm Release
-
-```bash
-helm list -n argocd
-```
-
 ---
 
 # Rollback
@@ -959,169 +858,9 @@ git push origin main
 
 Argo CD detects the Git change and synchronizes the previous desired state.
 
----
-
-# End-to-End Workflow
-
-```text
-Developer
-    |
-    v
-GitHub
-    |
-    v
-GitHub Actions
-    |
-    +-- Test
-    +-- Build
-    +-- Security Scan
-    +-- Docker Image
-    |
-    v
-Container Registry
-    |
-    v
-Git Desired State
-    |
-    v
-Argo CD
-    |
-    +-- Detect Changes
-    +-- Render Helm Chart
-    +-- Compare Desired vs Live
-    +-- Synchronize
-    +-- Monitor Health
-    |
-    v
-Kubernetes Cluster
-    |
-    v
-Application
-```
 
 ---
 
-# Key DevOps Concepts Demonstrated
-
-- GitOps
-- Argo CD
-- Kubernetes
-- Helm
-- Helm Charts
-- Helm Templates
-- Helm Values
-- Argo CD Applications
-- AppProjects
-- ApplicationSets
-- Automated synchronization
-- Self-healing
-- Automatic pruning
-- Drift detection
-- Application health monitoring
-- Git-based rollback
-- Declarative deployments
-- CI/CD separation
-- Multi-environment deployment
 
 ---
 
-# Interview Explanation
-
-### What is Argo CD?
-
-Argo CD is a Kubernetes-native GitOps Continuous Delivery tool.
-
-It continuously compares the desired state stored in Git with the live state running in Kubernetes.
-
-If they differ, Argo CD identifies the application as OutOfSync and can synchronize the cluster with Git.
-
-### Why did you use Argo CD?
-
-I used Argo CD to implement GitOps-based Continuous Delivery.
-
-Instead of allowing the CI pipeline to directly deploy resources to Kubernetes, the desired deployment configuration is maintained in Git.
-
-Argo CD monitors Git and reconciles Kubernetes with the desired state.
-
-This provides better auditability, version control, self-healing and rollback capabilities.
-
-### How did you install Argo CD?
-
-I installed Argo CD using the Argo CD Helm chart.
-
-```bash
-helm repo add argo https://argoproj.github.io/argo-helm
-
-helm repo update
-
-helm upgrade --install argocd argo/argo-cd \
-  --namespace argocd \
-  --create-namespace \
-  --values values.yaml
-```
-
-### How does Argo CD deploy the application?
-
-The application is packaged as a Helm chart.
-
-The Argo CD Application points to the Helm chart directory in Git.
-
-Argo CD retrieves the chart, renders the Helm templates and compares the generated desired state with the live Kubernetes state.
-
-If automated synchronization is enabled, Argo CD deploys the changes automatically.
-
-### What is the difference between Helm and Argo CD?
-
-Helm is used for packaging and templating Kubernetes applications.
-
-Argo CD is used for GitOps Continuous Delivery and reconciliation.
-
-In this project:
-
-```text
-Helm
- |
- +-- Chart.yaml
- +-- values.yaml
- +-- templates/
- |
- v
-Kubernetes Manifests
-```
-
-Argo CD manages the GitOps lifecycle:
-
-```text
-Git
- |
- v
-Argo CD
- |
- v
-Helm Rendering
- |
- v
-Kubernetes
-```
-
-Helm handles templating while Argo CD handles synchronization and reconciliation.
-
----
-
-# Conclusion
-
-This project demonstrates a GitOps-based Kubernetes deployment using Argo CD and Helm.
-
-The core design principle is:
-
-```text
-Git = Source of Truth
-        |
-        v
-     Argo CD
-        |
-        v
- Kubernetes
-```
-
-Helm provides reusable application templates, while Argo CD continuously reconciles the Kubernetes cluster with the desired state stored in Git.
