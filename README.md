@@ -18,53 +18,6 @@ The application is packaged using Helm and deployed to Kubernetes through Argo C
 
 ---
 
-## Architecture
-
-```mermaid
-flowchart TD
-    A[Developer] --> B[GitHub Repository]
-    B --> C[GitHub Actions]
-    B --> D[Argo CD]
-    C --> E[Container Registry]
-    D --> F[Helm Application]
-    F --> G[Kubernetes Cluster]
-    G --> H[Application]
-
-    C --> C1[CI / Build / Scan]
-    D --> D1[GitOps / CD]
-```
-
-### GitOps Flow
-
-```text
-Developer
-    |
-    v
-Git Push
-    |
-    v
-GitHub
-    |
-    +--------------------------+
-    |                          |
-    v                          v
-GitHub Actions              Argo CD
-    |                          |
-    | CI                       | CD
-    |                          |
-    v                          v
-Container Registry       Compare Git vs Cluster
-                               |
-                               v
-                         Kubernetes Cluster
-```
-
-GitHub Actions is responsible for CI activities such as build, test and image publishing.
-
-Argo CD is responsible for Continuous Delivery and maintaining the desired Kubernetes state.
-
----
-
 # What is Argo CD?
 
 Argo CD is a Kubernetes-native GitOps Continuous Delivery tool.
@@ -79,87 +32,7 @@ OutOfSync
 
 Argo CD can then synchronize the Kubernetes cluster with the desired state stored in Git.
 
-The basic model is:
-
-```text
-Git Repository
-      |
-      | Desired State
-      v
-   Argo CD
-      |
-      | Reconciliation
-      v
-Kubernetes Cluster
-      |
-      | Live State
-      v
- Application
-```
-
 Git acts as the source of truth.
-
----
-
-# Why Argo CD?
-
-A traditional CI/CD deployment can look like:
-
-```text
-Developer
-    |
-    v
-GitHub
-    |
-    v
-CI Pipeline
-    |
-    +-- Build
-    +-- Test
-    +-- Docker Build
-    |
-    v
-kubectl apply
-    |
-    v
-Kubernetes
-```
-
-In this model, the CI system needs direct access to the Kubernetes cluster.
-
-With GitOps:
-
-```text
-Developer
-    |
-    v
-GitHub
-    |
-    v
-GitHub Actions
-    |
-    +-- Build
-    +-- Test
-    +-- Security Scan
-    |
-    v
-Container Registry
-
-
-Git Repository
-    |
-    v
-Argo CD
-    |
-    v
-Kubernetes
-```
-
-The CI pipeline does not need to directly deploy Kubernetes resources.
-
-Instead, the desired configuration is maintained in Git.
-
-Argo CD detects the Git change and reconciles the Kubernetes cluster.
 
 ---
 
@@ -241,35 +114,6 @@ If the states differ, Argo CD detects the drift.
 
 # Argo CD Architecture
 
-```text
-                         Git Repository
-                              |
-                              v
-                    +---------------------+
-                    | Repository Server   |
-                    +---------------------+
-                              |
-                              v
-                    +---------------------+
-                    |    API Server       |
-                    +---------------------+
-                       |             |
-                       v             v
-                     Web UI         CLI
-                                      |
-                                      v
-                    +---------------------+
-                    | Application         |
-                    | Controller          |
-                    +---------------------+
-                              |
-                              v
-                       Kubernetes API
-                              |
-                              v
-                    Kubernetes Cluster
-```
-
 ## API Server
 
 Provides:
@@ -312,15 +156,6 @@ Helm and Argo CD solve different problems.
 
 Helm is used for Kubernetes application packaging and templating.
 
-```text
-values.yaml
-     |
-     v
-Helm Templates
-     |
-     v
-Kubernetes YAML
-```
 
 ### Argo CD
 
@@ -329,10 +164,8 @@ Argo CD is used for GitOps-based Continuous Delivery.
 ```text
 Git
  |
- v
 Argo CD
  |
- v
 Kubernetes
 ```
 
@@ -459,41 +292,6 @@ argocd    argocd      deployed
 
 ---
 
-# Argo CD Values
-
-Argo CD can be configured through Helm values.
-
-Example:
-
-```yaml
-server:
-  replicas: 2
-
-repoServer:
-  replicas: 2
-
-controller:
-  replicas: 2
-```
-
-Install using a values file:
-
-```bash
-helm upgrade --install argocd argo/argo-cd \
-  --namespace argocd \
-  --create-namespace \
-  --values helm/argocd/values.yaml
-```
-
-Environment-specific values can also be maintained:
-
-```text
-values-dev.yaml
-values-prod.yaml
-```
-
----
-
 # Argo CD Application
 
 The Argo CD `Application` defines:
@@ -520,7 +318,7 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/YOUR_USERNAME/argocd-gitops-project.git
+    repoURL: https://github.com/harishrao-devops/argocd-gitops-project.git
     targetRevision: main
     path: helm/argocd-demo
 
@@ -729,40 +527,6 @@ This is useful for multi-environment GitOps deployments.
 
 ---
 
-# Argo CD Project
-
-An Argo CD `AppProject` provides logical grouping and access control.
-
-It can control:
-
-- Allowed Git repositories
-- Kubernetes destinations
-- Namespaces
-- Cluster resources
-
-Example:
-
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: AppProject
-
-metadata:
-  name: platform
-  namespace: argocd
-
-spec:
-  description: Platform applications
-
-  sourceRepos:
-    - https://github.com/YOUR_USERNAME/*
-
-  destinations:
-    - namespace: platform-*
-      server: https://kubernetes.default.svc
-```
-
----
-
 # Access Argo CD
 
 For a lab environment, use port forwarding:
@@ -840,11 +604,9 @@ Example:
 Commit A
 Version 1.0
     |
-    v
 Commit B
 Version 1.1
     |
-    v
 Commit C
 Version 1.2
 ```
@@ -858,9 +620,7 @@ git push origin main
 
 Argo CD detects the Git change and synchronizes the previous desired state.
 
-
 ---
-
 
 ---
 
