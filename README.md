@@ -148,31 +148,6 @@ Responsible for:
 
 ---
 
-# Helm and Argo CD
-
-Helm and Argo CD solve different problems.
-
-### Helm
-
-Helm is used for Kubernetes application packaging and templating.
-
-
-### Argo CD
-
-Argo CD is used for GitOps-based Continuous Delivery.
-
-```text
-Git
- |
-Argo CD
- |
-Kubernetes
-```
-
-In this project, Helm is used to package the application and Argo CD manages its deployment lifecycle.
-
----
-
 # Repository Structure
 
 ```text
